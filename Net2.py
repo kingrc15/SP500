@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 class ActFuncError(Exception):
 	pass
@@ -86,9 +87,16 @@ class Net():
 
 	def evaluate(self, data):
 		cost = 0
+		ys = []
+		outputs = []
 		for x, y in data:
 			y.shape = (len(y),1)
-			cost += abs(sum(y - self.feedforward(x)))
+			output = self.feedforward(x)
+			ys.append(sum(y))
+			outputs.append(sum(output))
+			cost += abs(sum(y - output))
+		plt.plot(outputs, ys, 'ro')
+		plt.show()
 		return cost
 
 def sigmoid(x):

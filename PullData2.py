@@ -15,7 +15,7 @@ def get_source(company):
 
 	elem = browser.find_element_by_tag_name("body")
 
-	no_of_pagedowns = 400		#1400
+	no_of_pagedowns = 450		#1400
 
 	while no_of_pagedowns:
 		elem.send_keys(Keys.PAGE_DOWN)
