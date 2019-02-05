@@ -7,7 +7,10 @@ class date:
 
 	def __init__(self, month, day, year):
 		self.day = day
-		self.month = month
+		if len(month) < 3:
+			self.month = self.ReverseMonthIndex(month)
+		else:
+			self.month = month
 		self.year = year
 
 	def monthIndex(self):
@@ -16,6 +19,14 @@ class date:
 			return '0' + str(months.index(self.month))
 		else:
 			return str(months.index(self.month));
+
+	def ReverseMonthIndex(self, month):
+		self.month = int(month)
+		months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+		if months[self.month] < 10:
+			return '0' + str(months[self.month])
+		else:
+			return str(months[self.month]);
 
 	def __lt__(self, other):
 		if self.year < other.year:
@@ -34,7 +45,10 @@ class date:
 					return False;
 
 	def __gt__(self, other):
-		return not __lt__(self, other);
+		return not self.__lt__(other);
+
+	def GetDate(self):
+		return self.month, self.day, self.year
 
 def SortFiles(f):				#bubble sort
 	with open("Resources/" + f + ".csv",'r') as fi:

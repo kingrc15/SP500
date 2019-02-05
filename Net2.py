@@ -39,8 +39,12 @@ class Net():
 					break
 				batch.append(data[bs])
 				if bs % batch_size == 0:
+					if ec % 1000 == 0:
+						plot = True
+					else:
+						plot = False
 					self.update_batch(batch, LR)
-					print "Epoch {0}: Cost = {1}".format(ec, float(self.evaluate(test_data)))
+					print "Epoch {0}: Cost = {1}".format(ec, float(self.evaluate(data, plot)))
 					ec += 1
 					if ec == epochs: break
 
@@ -85,18 +89,27 @@ class Net():
 
 		return delta_w, delta_b
 
-	def evaluate(self, data):
+	def evaluate(self, data, plot):
 		cost = 0
-		ys = []
-		outputs = []
+		ys = np.zeros([1,len(data)])
+		outputs = np.zeros([1,len(data)])
+		i = 0
 		for x, y in data:
 			y.shape = (len(y),1)
 			output = self.feedforward(x)
-			ys.append(sum(y))
-			outputs.append(sum(output))
+			ys[i] = sum(y)
+			outputs[i] = sum(output)
 			cost += abs(sum(y - output))
-		plt.plot(outputs, ys, 'ro')
-		plt.show()
+		if plot:
+			plt.clf()
+			com_num = np.arange(0, 505)
+			com_num.shape = (1,505)
+			outputs.transpose()
+			ys.transpose()
+			#outputs = [1,[outputs[x] for x in xrange(len(outputs))] for y in xrange(len(outputs))]
+			#ys = [1,[ys[x] for x in xrange(len(ys))] for y in xrange(len(y))]
+			plt.plot(com_num, outputs, 'ro', com_num, ys, 'bs')
+			plt.show()
 		return cost
 
 def sigmoid(x):
