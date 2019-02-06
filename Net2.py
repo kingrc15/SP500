@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 import matplotlib.pyplot as plt
 
 class ActFuncError(Exception):
@@ -7,28 +8,79 @@ class ActFuncError(Exception):
 class ActFuncNotFound(Exception):
 	pass
 
+class QuadraticCost(object):
+    @staticmethod
+    def fn(a, y):
+        return 0.5*np.linalg.norm(a-y)**2
+
+    @staticmethod
+    def delta(z, a, y):
+        return (a-y) * sigmoid_prime(z)
+
+
+class CrossEntropyCost(object):
+    @staticmethod
+    def fn(a, y):
+        return np.sum(np.nan_to_num(-y*np.log(a)-(1-y)*np.log(1-a)))
+
+    @staticmethod
+    def delta(z, a, y):
+    	y.shape = (len(y),1)
+        return (a-y)
+
+#Activation Functions
+class TanH(object):
+
+	@staticmethod
+	def func(x):
+		return np.tanh(x)
+
+	@staticmethod
+	def prime(x):
+		return 1.0 - np.tanh(x)**2
+
+class ReLU(object):
+
+	@staticmethod
+	def func(x):
+		return x * (x > 0)
+
+	@staticmethod
+	def prime(x):
+		return 1 * (x >= 0)
+
+class sig(object):
+
+	@staticmethod
+	def func(x):
+		return 1 / (1 + np.exp(-x))
+
+	@staticmethod
+	def prime(x):
+		return (1 / (1 + np.exp(-x))) * (1 - (1 / (1 + np.exp(-x))))
+
+
 class Net():
-	def __init__(self, sizes, act_function):
+	def __init__(self, sizes, act_function, cost_func = 'CrossEntropyCost'):
+		self.best = np.inf
 		self.sizes = sizes
 		self.layers = len(sizes)
 		self.weights  = [np.random.rand(y,x)/np.sqrt(x) for x, y in zip(sizes[:-1],sizes[1:])]
 		self.biases = [np.random.rand(y,1) for y in sizes[1:]]
+		self.cost_func = getattr(sys.modules[__name__], cost_func)
 		if len(act_function) == self.layers:
-			self.act_function = act_function
+			self.act_function = [getattr(sys.modules[__name__], x) for x in act_function]
 		else:
 			raise ActFuncError("{0} activation functions specified when {1} were needed".format(len(act_function),self.layers))
 	
 	def feedforward(self, activation):
 		activation.shape = (len(activation),1)
 		for b, w, f in zip(self.biases, self.weights, self.act_function):
-			if f == 'sig':
-				activation = sigmoid(w.dot(activation)+b)
-			#elif f == 'ReLU':						one day
-			else:
-				ActFuncNotFound("Activation function {0} not found.".format(f))
+			activation = f.func(w.dot(activation)+b)
 		return activation
 
 	def GD(self, data, LR, epochs, batch_size, test_data):
+		self.LR = LR
 		batch = []
 		ec = 1
 		epochs += 1
@@ -43,8 +95,8 @@ class Net():
 						plot = True
 					else:
 						plot = False
-					self.update_batch(batch, LR)
-					print "Epoch {0}: Cost = {1}".format(ec, float(self.evaluate(data, plot)))
+					self.update_batch(batch, self.LR)
+					print "Epoch {0}: Cost = {1}".format(ec, float(self.evaluate(test_data, plot)))
 					ec += 1
 					if ec == epochs: break
 
@@ -71,35 +123,27 @@ class Net():
 		activation.shape = (len(activation),1)
 		activations = [x]
 		for b, w, f in zip(self.biases, self.weights, self.act_function):
-			if f == 'sig':
-				z = w.dot(activation)+b
-				zs.append(z)
-				activation = sigmoid(z)
-				activations.append(activation)
-		cd = self.cost_derivative(activation[-1],y)
-		cd.shape = (len(cd),1)
-		d = cd * sig_prime(zs[-1])
+			z = w.dot(activation)+b
+			zs.append(z)
+			activation = f.func(z)
+			activations.append(activation)
+		d = self.cost_func.delta(zs[-1], activations[-1],y)
+		#d.shape = (len(d),1)
 		delta_b[-1] = d
 		delta_w[-1] = d.dot(activations[-2].transpose())
 		for l in xrange(2, self.layers):
-			sp = sig_prime(zs[-l])
-			d = np.dot(np.transpose(self.weights[-l+1]), d)* sp
+			ap = self.act_function[-l].prime(zs[-l])
+			d = np.dot(np.transpose(self.weights[-l+1]), d)* ap
 			delta_b[-l] = d
 			delta_w[-l] = d.dot(activations[-l-1].transpose())
 
 		return delta_w, delta_b
 
 	def evaluate(self, data, plot):
-		cost = 0
-		ys = np.zeros([1,len(data)])
-		outputs = np.zeros([1,len(data)])
-		i = 0
+		cost = 0.0
 		for x, y in data:
-			y.shape = (len(y),1)
-			output = self.feedforward(x)
-			ys[i] = sum(y)
-			outputs[i] = sum(output)
-			cost += abs(sum(y - output))
+			a = self.feedforward(x)
+			cost += self.cost_func.fn(a, y)/len(data)
 		if plot:
 			plt.clf()
 			com_num = np.arange(0, 505)
@@ -111,9 +155,3 @@ class Net():
 			plt.plot(com_num, outputs, 'ro', com_num, ys, 'bs')
 			plt.show()
 		return cost
-
-def sigmoid(x):
-	return 1.0/(1.0 + np.exp(-x))
-
-def sig_prime(x):
-	return sigmoid(x)*(1-sigmoid(x))

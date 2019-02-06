@@ -7,5 +7,5 @@ import FormatData
 
 #PullData2.PullData()
 data = FormatData.FormatedData(.75, 2000)
-net = Net2.Net([3033,5000,505],['sig','sig','sig'])
-net.GD(zip(data.inP,data.out),300.0,1000000,30,zip(data.testinP, data.testOut))
+net = Net2.Net([3033,1000,505],['sig','sig','sig'])
+net.GD(zip(data.inP,data.out),100.0,1000000,30,zip(data.testinP, data.testOut))
