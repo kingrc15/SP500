@@ -8,6 +8,16 @@ class ActFuncError(Exception):
 class ActFuncNotFound(Exception):
 	pass
 
+class MSE(object):
+	@staticmethod
+	def fn(a, y):
+		return np.sum((a - y)**2) / y.size
+
+	@staticmethod
+	def delta(z, a, y):
+		y.shape = (len(y),1)
+		return a - y
+
 class QuadraticCost(object):
     @staticmethod
     def fn(a, y):
@@ -15,6 +25,7 @@ class QuadraticCost(object):
 
     @staticmethod
     def delta(z, a, y):
+    	y.shape = (len(y),1)
         return (a-y) * sigmoid_prime(z)
 
 
@@ -33,6 +44,8 @@ class TanH(object):
 
 	@staticmethod
 	def func(x):
+		#print x
+		#print np.tanh(x)
 		return np.tanh(x)
 
 	@staticmethod
@@ -91,7 +104,7 @@ class Net():
 					break
 				batch.append(data[bs])
 				if bs % batch_size == 0:
-					if ec % 1000 == 0:
+					if ec % 50 == 0:
 						plot = True
 					else:
 						plot = False
@@ -127,8 +140,7 @@ class Net():
 			zs.append(z)
 			activation = f.func(z)
 			activations.append(activation)
-		d = self.cost_func.delta(zs[-1], activations[-1],y)
-		#d.shape = (len(d),1)
+		d = self.cost_func.delta(zs[-1], activations[-1],y) * self.act_function[-1].prime(zs[-1])
 		delta_b[-1] = d
 		delta_w[-1] = d.dot(activations[-2].transpose())
 		for l in xrange(2, self.layers):
@@ -140,18 +152,21 @@ class Net():
 		return delta_w, delta_b
 
 	def evaluate(self, data, plot):
+		c = 0
+		comp_num = 10
 		cost = 0.0
+		ys = np.zeros([len(data),1])
+		outputs = np.zeros([(len(data)),1])
+		col_num = np.zeros([(len(data)),1])
 		for x, y in data:
 			a = self.feedforward(x)
-			cost += self.cost_func.fn(a, y)/len(data)
+			cost += self.cost_func.fn(a, y)
+			outputs[c] = a[comp_num]
+			ys[c] = y[comp_num]
+			col_num[c] = c
+			c += 1
 		if plot:
 			plt.clf()
-			com_num = np.arange(0, 505)
-			com_num.shape = (1,505)
-			outputs.transpose()
-			ys.transpose()
-			#outputs = [1,[outputs[x] for x in xrange(len(outputs))] for y in xrange(len(outputs))]
-			#ys = [1,[ys[x] for x in xrange(len(ys))] for y in xrange(len(y))]
-			plt.plot(com_num, outputs, 'ro', com_num, ys, 'bs')
+			plt.plot(col_num, outputs, 'ro', col_num, ys, 'bs')
 			plt.show()
 		return cost
