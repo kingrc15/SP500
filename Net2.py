@@ -1,6 +1,8 @@
 import numpy as np
 import sys
 import matplotlib.pyplot as plt
+import theano
+import theano.tensor as T
 
 class ActFuncError(Exception):
 	pass
@@ -66,11 +68,15 @@ class sig(object):
 
 	@staticmethod
 	def func(x):
-		return 1 / (1 + np.exp(-x))
+		x = T.dscalar('x')
+		sig = 1 / (1 + np.exp(-x))
+		return theano.function([x], sig)
 
 	@staticmethod
 	def prime(x):
-		return (1 / (1 + np.exp(-x))) * (1 - (1 / (1 + np.exp(-x))))
+		x = T.dscalar('x')
+		sigmoid_prime = (1 / (1 + np.exp(-x))) * (1 - (1 / (1 + np.exp(-x))))
+		return theano.function([x], sigmoid_prime)
 
 
 class Net():
@@ -104,7 +110,7 @@ class Net():
 					break
 				batch.append(data[bs])
 				if bs % batch_size == 0:
-					if ec % 50 == 0:
+					if ec % 10000 == 0:
 						plot = True
 					else:
 						plot = False
