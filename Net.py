@@ -2,6 +2,8 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 
+#np.set_printoptions(threshold=np.nan)
+
 class ActFuncError(Exception):
 	pass
 
@@ -73,13 +75,21 @@ class sig(object):
 		return (1 / (1 + np.exp(-x))) * (1 - (1 / (1 + np.exp(-x))))
 
 
+def RMS(gs, const):
+	return [np.sqrt(g + const) for g in gs]
+
+
 class Net():
-	def __init__(self, sizes, act_function, cost_func = 'CrossEntropyCost'):
+	def __init__(self, sizes, act_function, cost_func = 'CrossEntropyCost', load_data = 'None'):
 		self.best = np.inf
 		self.sizes = sizes
 		self.layers = len(sizes)
-		self.weights  = [np.random.rand(y,x)/np.sqrt(x) for x, y in zip(sizes[:-1],sizes[1:])]
-		self.biases = [np.random.rand(y,1) for y in sizes[1:]]
+		if load_data == 'None':
+			self.weights  = [np.random.rand(y,x)/np.sqrt(x) for x, y in zip(sizes[:-1],sizes[1:])]
+			self.biases = [np.random.rand(y,1) for y in sizes[1:]]
+		else:
+			self.weights = np.load('weights.npy')
+			self.biases = np.load('biases.npy')
 		self.cost_func = getattr(sys.modules[__name__], cost_func)
 		self.min_cost = 1000000.0
 		if len(act_function) == self.layers:
@@ -93,7 +103,42 @@ class Net():
 			activation = f.func(w.dot(activation)+b)
 		return activation
 
-	def GD(self, data, LR, epochs, batch_size, test_data):
+	def adadelta(self, data, decay_rate, const, epochs, test_data, batch_size):
+		time = 0
+		previous_w_grad = [np.zeros(w.shape) for w in self.weights]
+		previous_b_grad = [np.zeros(b.shape) for b in self.biases]
+		previous_w_update = [np.zeros(w.shape) for w in self.weights]
+		previous_b_update = [np.zeros(b.shape) for b in self.biases]
+		ec = 0
+
+		while ec < epochs:
+			for x, y in data:
+				delta_w, delta_b = self.back_propagation(x, y)
+				w_grad_sqr = np.multiply(previous_w_grad,decay_rate) + np.power(np.multiply((1.0-decay_rate),delta_w),2)
+				b_grad_sqr = np.multiply(previous_b_grad,decay_rate) + np.power(np.multiply((1.0-decay_rate),delta_b),2)
+				w_delta = -np.divide(RMS(previous_w_update, const),RMS(w_grad_sqr,const))*delta_w
+				b_delta = -np.divide(RMS(previous_b_update, const),RMS(b_grad_sqr,const))*delta_b
+				w_update_sqr = np.multiply(previous_w_update,decay_rate) + np.power(np.multiply((1.0-decay_rate),w_delta),2)
+				b_update_sqr = np.multiply(previous_b_update,decay_rate) + np.power(np.multiply((1.0-decay_rate),b_delta),2)
+
+				self.weight = [w + nw for w, nw in zip(self.weights, w_delta)]
+				self.biases = [b + nb for b, nb in zip(self.biases, b_delta)]
+				previous_w_grad = w_grad_sqr
+				previous_b_grad = b_grad_sqr
+				previous_w_update = w_update_sqr
+				previous_b_update = b_update_sqr
+				ec = time/batch_size
+				if time % batch_size == 0:
+					if time / batch_size % batch_size == 0:
+						print "Epoch {0}: Cost = {1}".format(ec, float(self.evaluate(test_data, True)))
+					else:
+						print "Epoch {0}: Cost = {1}".format(ec, float(self.evaluate(test_data, False)))
+				if ec == epochs: 
+					print "Epoch {0}: Cost = {1}".format(ec, float(self.evaluate(test_data, True)))
+					break
+				time += 1
+
+	def SGD(self, data, LR, epochs, batch_size, test_data):
 		self.LR = LR
 		batch = []
 		ec = 1
@@ -105,12 +150,11 @@ class Net():
 					break
 				batch.append(data[bs])
 				if bs % batch_size == 0:
-					if ec % 10000000 == 0:
+					if ec % 100 == 0:
 						plot = True
 					else:
 						plot = False
 					self.update_batch(batch, self.LR)
-					self.LR += 1
 					print "Epoch {0}: Cost = {1}".format(ec, float(self.evaluate(test_data, plot)))
 					ec += 1
 					if ec == epochs: break

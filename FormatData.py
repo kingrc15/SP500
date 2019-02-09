@@ -38,10 +38,15 @@ class FormatedData(object):
 		self.out = normalize(self.out[:][1:])		    #Remove first
 		
 
-		self.testinP = self.inP[:int(np.floor(len(self.inP)*(1-r)))]				
-		self.testOut = self.out[:int(np.floor(len(self.out)*(1-r)))]					
-		self.inP = self.inP[int(np.floor(len(self.inP)*(1-r))):]			
-		self.out = self.out[int(np.floor(len(self.out)*(1-r))):]
+		self.testinP = np.array(self.inP[:int(np.floor(len(self.inP)*(1-r)))])			
+		self.testOut = np.array(self.out[:int(np.floor(len(self.out)*(1-r)))])			
+		self.inP = np.array(self.inP[int(np.floor(len(self.inP)*(1-r))):])		
+		self.out = np.array(self.out[int(np.floor(len(self.out)*(1-r))):])
+
+		np.save('TestInputs',self.testinP)
+		np.save('TestOutputs',self.testOut)
+		np.save('Inputs',self.inP)
+		np.save('Outputs',self.out)
 
 	def FormatDate(self, line):
 		d = CleanData.date(line[:3],line[4:6],line[7:11])
@@ -88,21 +93,3 @@ class FormatedData(object):
 				length = count
 
 		return length
-
-
-'''def FormatData(r, minYear = 2000):
-
-	inP = normalize(inP[:][:-6])		#Remove last
-	out = normalize(out[:][1:])		#Remove first
-	
-
-	testinP = inP[:int(np.floor(len(inP)*(1-r)))]				
-	testOut = out[:int(np.floor(len(out)*(1-r)))]					
-	inP = inP[int(np.floor(len(inP)*(1-r))):]			
-	out = out[int(np.floor(len(out)*(1-r))):]
-	np.savetxt("Resources/Input.csv",inP, fmt="%8.4f", delimiter=",")
-	np.savetxt("Resources/Output.csv",out, fmt="%8.4f", delimiter=",")
-	np.savetxt("Resources/TestInput.csv",testinP, fmt="%8.4f", delimiter=",")
-	np.savetxt("Resources/TestOutput.csv",testOut, fmt="%8.4f", delimiter=",")
-	return (zip(inP, out), zip(testinP, testOut))
-'''
