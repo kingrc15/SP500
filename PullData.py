@@ -61,14 +61,14 @@ def MergeData(data1, data2):
 def WriteToFile(data, company):
 	with open("Resources/" + company + ".csv", "w+") as f:
 		for l in data:
-			f.write(str(l) + "\n")
+			if l:
+				f.write(str(l) + "\n")
 	f.close
 	return;
 
 def Scrape(company):
 	with open("Resources/" + company + ".csv", "r+") as f:
-		url = "https://finance.yahoo.com/quote/"  + company + "/history?period1=-630957600&period2=1546758000&interval=1d&filter=history&frequency=1d"
-		#url = 'https://finance.yahoo.com/quote/' + company + '/history?p=' + company
+		url = 'https://finance.yahoo.com/quote/' + company + '/history?p=' + company
 		fileTemp = []
 		page_grab = requests.get(url, timeout=50)
 		marketSite = BeautifulSoup(page_grab.content, 'html.parser')
@@ -76,6 +76,7 @@ def Scrape(company):
 			x = CleanData.CleanString(x)
 			fileTemp.append(x)
 		NewData = MergeData(WriteTempData(marketSite.find_all('span')),fileTemp)
+		WriteToFile(NewData, company)
 	return;
 
 def PullData():

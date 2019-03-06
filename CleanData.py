@@ -21,6 +21,7 @@ class date:
 			return str(months.index(self.month));
 
 	def ReverseMonthIndex(self, month):
+		print month
 		self.month = int(month)
 		months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 		if months[self.month] < 10:
@@ -53,12 +54,13 @@ class date:
 def SortFiles(f):				#bubble sort
 	with open("Resources/" + f + ".csv",'r') as fi:
 		temp = fi.read().split('\n')
-		i = 1
+		i = 2
 		sort = False
 		while i < len(temp) and not sort:
 			j = 0
 			sort = True
 			while j < len(temp)-i:
+				#print temp
 				date1 = date(temp[j][:3],temp[j][4:6],temp[j][7:11])
 				date2 = date(temp[j+1][:3],temp[j+1][4:6],temp[j+1][7:11])
 				if date1 < date2:
@@ -123,6 +125,7 @@ def DeleteRepeating(f):
 			for l in temp:
 				if l == s:
 					repeat = True
+					break
 			if not repeat:
 				temp.append(s)
 		temp = Update(temp)

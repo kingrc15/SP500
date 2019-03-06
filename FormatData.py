@@ -1,6 +1,7 @@
 import CleanData
 import numpy as np
-from sklearn.preprocessing import normalize
+import matplotlib.pyplot as plt
+from sklearn import preprocessing
 
 class FormatedData(object):
 	def __init__(self, r, minYear = 2000):
@@ -34,9 +35,16 @@ class FormatedData(object):
 						j += 1
 				i += 1
 
-		self.inP = normalize(self.inP[:][:-6])		#Remove last
-		self.out = normalize(self.out[:][1:])		    #Remove first
-		
+		self.inP = np.flip(self.inP[:][:-6])		#Remove last
+		self.out = np.flip(self.out[:][1:])		    #Remove first
+
+		o = np.zeros([len(self.out)])
+		for p in xrange(len(self.out)):
+			o[p] = np.average(self.out[p])
+
+		col_num = np.arange(len(self.out))
+		plt.plot(col_num, o, 'ro')
+		plt.show()
 
 		self.testinP = np.array(self.inP[:int(np.floor(len(self.inP)*(1-r)))])			
 		self.testOut = np.array(self.out[:int(np.floor(len(self.out)*(1-r)))])			
@@ -72,7 +80,7 @@ class FormatedData(object):
 		row[1] = float(row[1]) / 31.0
 		row[2] = (float(row[2]) - float(self.minDate.GetDate()[2])) / (float(self.maxDate.GetDate()[2]) - float(self.minDate.GetDate()[2]))
 		for i in xrange(5):
-			row[3 + i] = (float(row[3 + i]) - self.minStockValue) / (self.maxStockValue - self.minStockValue)
+			row[3 + i] = (float(row[3 + i]) - self.minStockValue) / (self.maxStockValue - self.minStockValue)# / (1.00001 ** float(row[3 + i]))
 		row[8] = (float(row[8]) - self.minVolume) / (self.maxVolume - self.minVolume)
 		return row
 

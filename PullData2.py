@@ -1,5 +1,4 @@
 import time
-import requests
 import CleanData
 
 from bs4 import BeautifulSoup
@@ -106,6 +105,7 @@ def PullData():
 		i = 1
 		for company in companies:
 			name = company[:len(company)-1]
+			name = "ABT"
 			Scrape(name)
 			CleanData.DeleteRepeating(name)
 			CleanData.SortFiles(name)
